@@ -2,23 +2,22 @@ import { createRouter, createWebHistory } from "vue-router"
 
 import DashboardLayout from "@/layout/dashboard.vue"
 
-import HomePage from "@/pages/home.vue"
-import CollectionPage from "@/pages/dashboard/collection.vue"
+import LoginPage from "@/modules/auth/login.vue"
+import CollectionPage from "@/modules/collection/index.vue"
 
 const routes = [
     {
         path: "/",
-        name: "home",
-        component: () => HomePage,
+        name: "Login",
+        component: () => LoginPage,
     },
     {
         path: "/dashboard",
-        name: "dashboard",
         component: () => DashboardLayout,
         children: [
             {
                 path: "",
-                name: "collection",
+                name: "Collections",
                 component: () => CollectionPage,
             },
         ],

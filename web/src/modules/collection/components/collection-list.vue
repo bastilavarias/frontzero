@@ -131,6 +131,7 @@ const collections = [
                     </Collapsible>
                 </SidebarMenu>
             </SidebarGroup>
+
             <Button variant="outline" class="w-full">
                 <Plus />
                 New collection

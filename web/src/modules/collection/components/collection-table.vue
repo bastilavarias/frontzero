@@ -1,5 +1,5 @@
 <script setup>
-import { h, ref, computed, watch, markRaw } from "vue"
+import { h, ref, computed, watch } from "vue"
 import {
     useVueTable,
     getCoreRowModel,
@@ -10,11 +10,9 @@ import {
     getFacetedUniqueValues,
     FlexRender,
 } from "@tanstack/vue-table"
-import { valueUpdater } from "@/lib/utils" // Assuming this utility is available
-
-// shadcn-vue components
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { valueUpdater } from "@/lib/utils.js"
+import { Button } from "@/components/ui/button/index.js"
+import { Checkbox } from "@/components/ui/checkbox/index.js"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,8 +20,8 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu/index.js"
+import { Input } from "@/components/ui/input/index.js"
 import {
     Table,
     TableBody,
@@ -31,16 +29,15 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/table/index.js"
+import { Badge } from "@/components/ui/badge/index.js"
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select/index.js"
 import {
     Command,
     CommandEmpty,
@@ -49,31 +46,25 @@ import {
     CommandItem,
     CommandList,
     CommandSeparator,
-} from "@/components/ui/command"
-
-// Lucide Icons
+} from "@/components/ui/command/index.js"
 import {
     ArrowDownIcon,
     ArrowUpIcon,
     SortAscIcon,
     CheckIcon,
-    ChevronDownIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     ChevronsLeftIcon,
     ChevronsRightIcon,
     CircleIcon,
-    TrashIcon,
-} from "lucide-vue-next" // Using shadcn-vue's convention for some icons
-
-// --- Utils (Simulate shadcn-vue's utils/cn for conditional class merging) ---
-// If you don't have a shared `cn` utility, you can replace it with a simple
-// string concatenation or a class binding. For full functionality, consider
-// adding `cn` from the shadcn-vue boilerplate if not present.
-// Example: import { cn } from '@/lib/utils'
+    Search,
+    Code2,
+    Plus,
+} from "lucide-vue-next"
+import CollectionFormSheet from "@/modules/collection/components/collection-form-sheet.vue"
+import CollectionPreviewSheet from "@/modules/collection/components/collection-preview-sheet.vue"
 const cn = (...classes) => classes.filter(Boolean).join(" ")
 
-// Dummy data for tasks (similar to the shadcn-vue example)
 const statuses = [
     { value: "backlog", label: "Backlog", icon: CircleIcon },
     { value: "todo", label: "Todo", icon: CircleIcon },
@@ -229,8 +220,9 @@ const columnVisibility = ref({})
 const rowSelection = ref({})
 const sorting = ref([])
 const globalFilter = ref("")
+const isNewRecordFormSheetOpen = ref(false)
+const isAPIPreviewSheetOpen = ref(false)
 
-// --- Column Definitions ---
 const columns = computed(() => [
     {
         id: "select",
@@ -255,7 +247,7 @@ const columns = computed(() => [
     },
     {
         accessorKey: "id",
-        header: ({ column }) => h("div", {}, ["Task ID"]), // Not sortable in original example
+        header: () => h("div", {}, ["Task ID"]),
         cell: ({ row }) => h("div", { class: "w-[80px]" }, row.getValue("id")),
         enableSorting: false,
         enableHiding: false,
@@ -381,7 +373,6 @@ const columns = computed(() => [
     },
 ])
 
-// --- TanStack Table Instance ---
 const table = useVueTable({
     data: tasks.value,
     columns: columns.value,
@@ -689,83 +680,45 @@ watch(globalFilter, () => {
 </script>
 
 <template>
-    <div class="space-y-4">
-        <div class="flex items-center justify-between">
-            <div class="flex flex-1 items-center space-x-2">
-                <Input
-                    placeholder="Filter tasks..."
-                    class="h-8 w-[150px] lg:w-[250px]"
-                    :model-value="globalFilter ?? ''"
-                    @update:model-value="
-                        (updater) => valueUpdater(updater, globalFilter)
-                    "
-                />
-                <DataTableColumnHeader
-                    v-if="table.getColumn('status')?.getCanFilter()"
-                    :column="table.getColumn('status')"
-                    title="Status"
-                    :options="statuses"
-                />
-                <DataTableColumnHeader
-                    v-if="table.getColumn('priority')?.getCanFilter()"
-                    :column="table.getColumn('priority')"
-                    title="Priority"
-                    :options="priorities"
-                />
-                <Button
-                    v-if="isFiltered"
-                    variant="ghost"
-                    @click="clearFilters"
-                    class="h-8 px-2 lg:px-3"
-                >
-                    Reset
-                    <SortAscIcon class="ml-2 h-4 w-4" />
-                </Button>
-            </div>
-            <div class="flex items-center space-x-2">
-                <Button
-                    v-if="table.getFilteredSelectedRowModel().rows.length > 0"
-                    variant="destructive"
-                    class="h-8 px-2 lg:px-3"
-                    @click="deleteSelectedRows"
-                >
-                    <TrashIcon class="mr-2 h-4 w-4" />
-                    Delete ({{
-                        table.getFilteredSelectedRowModel().rows.length
-                    }})
-                </Button>
-                <DropdownMenu>
-                    <DropdownMenuTrigger as-child>
-                        <Button variant="outline" class="ml-auto h-8">
-                            <SortAscIcon class="mr-2 h-4 w-4" />
-                            View
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" class="w-[150px]">
-                        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <template
-                            v-for="column in table
-                                .getAllColumns()
-                                .filter((column) => column.getCanHide())"
-                            :key="column.id"
+    <div>
+        <div class="flex flex-col items-center items-start">
+            <div class="p-4 flex flex-col w-full gap-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold">Users</h2>
+                    <div class="flex gap-2">
+                        <Button
+                            variant="outline"
+                            @click="
+                                isAPIPreviewSheetOpen = !isAPIPreviewSheetOpen
+                            "
                         >
-                            <DropdownMenuCheckboxItem
-                                class="capitalize"
-                                :checked="column.getIsVisible()"
-                                @update:checked="
-                                    (value) => column.toggleVisibility(!!value)
-                                "
-                            >
-                                {{ column.id }}
-                            </DropdownMenuCheckboxItem>
-                        </template>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            <Code2 /> API Preview</Button
+                        >
+                        <Button
+                            @click="
+                                isNewRecordFormSheetOpen =
+                                    !isNewRecordFormSheetOpen
+                            "
+                        >
+                            <Plus /> New Record
+                        </Button>
+                    </div>
+                </div>
+                <div class="relative items-center">
+                    <Input
+                        id="search"
+                        type="text"
+                        placeholder="Search columns..."
+                        class="pl-10"
+                    />
+                    <span
+                        class="absolute start-0 inset-y-0 flex items-center justify-center px-2"
+                    >
+                        <Search class="size-6 text-muted-foreground" />
+                    </span>
+                </div>
             </div>
-        </div>
 
-        <div class="rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow
@@ -781,7 +734,7 @@ watch(globalFilter, () => {
                                     'relative h-12 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
                                     header.column.getCanSort() &&
                                         'cursor-pointer',
-                                    header.column.id === 'select' && 'w-[3rem]', // Fixed width for select column
+                                    header.column.id === 'select' && 'w-[3rem]',
                                     header.column.id === 'actions' && 'w-[4rem]' // Fixed width for actions column
                                 )
                             "
@@ -835,77 +788,85 @@ watch(globalFilter, () => {
                     </template>
                 </TableBody>
             </Table>
+
+            <div class="flex items-center justify-end space-x-2 p-4">
+                <div class="flex-1 text-sm text-muted-foreground">
+                    {{ table.getFilteredSelectedRowModel().rows.length }} of
+                    {{ table.getFilteredRowModel().rows.length }} row(s)
+                    selected.
+                </div>
+                <div class="flex items-center space-x-2">
+                    <p class="text-sm font-medium">Rows per page</p>
+                    <Select
+                        :model-value="`${table.getState().pagination.pageSize}`"
+                        @update:model-value="
+                            (value) => table.setPageSize(Number(value))
+                        "
+                    >
+                        <SelectTrigger class="h-8 w-[70px]">
+                            <SelectValue
+                                :placeholder="
+                                    table.getState().pagination.pageSize
+                                "
+                            />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div
+                    class="flex items-center justify-center text-sm font-medium"
+                >
+                    Page {{ table.getState().pagination.pageIndex + 1 }} of
+                    {{ table.getPageCount() }}
+                </div>
+                <div class="space-x-2">
+                    <Button
+                        variant="outline"
+                        class="h-8 w-8 p-0"
+                        :disabled="!table.getCanPreviousPage()"
+                        @click="table.setPageIndex(0)"
+                    >
+                        <span class="sr-only">Go to first page</span>
+                        <ChevronsLeftIcon class="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        class="h-8 w-8 p-0"
+                        :disabled="!table.getCanPreviousPage()"
+                        @click="table.previousPage()"
+                    >
+                        <span class="sr-only">Go to previous page</span>
+                        <ChevronLeftIcon class="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        class="h-8 w-8 p-0"
+                        :disabled="!table.getCanNextPage()"
+                        @click="table.nextPage()"
+                    >
+                        <span class="sr-only">Go to next page</span>
+                        <ChevronRightIcon class="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        class="h-8 w-8 p-0"
+                        :disabled="!table.getCanNextPage()"
+                        @click="table.setPageIndex(table.getPageCount() - 1)"
+                    >
+                        <span class="sr-only">Go to last page</span>
+                        <ChevronsRightIcon class="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
         </div>
 
-        <div class="flex items-center justify-end space-x-2 py-4">
-            <div class="flex-1 text-sm text-muted-foreground">
-                {{ table.getFilteredSelectedRowModel().rows.length }} of
-                {{ table.getFilteredRowModel().rows.length }} row(s) selected.
-            </div>
-            <div class="flex items-center space-x-2">
-                <p class="text-sm font-medium">Rows per page</p>
-                <Select
-                    :model-value="`${table.getState().pagination.pageSize}`"
-                    @update:model-value="
-                        (value) => table.setPageSize(Number(value))
-                    "
-                >
-                    <SelectTrigger class="h-8 w-[70px]">
-                        <SelectValue
-                            :placeholder="table.getState().pagination.pageSize"
-                        />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="20">20</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                        <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            <div class="flex items-center justify-center text-sm font-medium">
-                Page {{ table.getState().pagination.pageIndex + 1 }} of
-                {{ table.getPageCount() }}
-            </div>
-            <div class="space-x-2">
-                <Button
-                    variant="outline"
-                    class="h-8 w-8 p-0"
-                    :disabled="!table.getCanPreviousPage()"
-                    @click="table.setPageIndex(0)"
-                >
-                    <span class="sr-only">Go to first page</span>
-                    <ChevronsLeftIcon class="h-4 w-4" />
-                </Button>
-                <Button
-                    variant="outline"
-                    class="h-8 w-8 p-0"
-                    :disabled="!table.getCanPreviousPage()"
-                    @click="table.previousPage()"
-                >
-                    <span class="sr-only">Go to previous page</span>
-                    <ChevronLeftIcon class="h-4 w-4" />
-                </Button>
-                <Button
-                    variant="outline"
-                    class="h-8 w-8 p-0"
-                    :disabled="!table.getCanNextPage()"
-                    @click="table.nextPage()"
-                >
-                    <span class="sr-only">Go to next page</span>
-                    <ChevronRightIcon class="h-4 w-4" />
-                </Button>
-                <Button
-                    variant="outline"
-                    class="h-8 w-8 p-0"
-                    :disabled="!table.getCanNextPage()"
-                    @click="table.setPageIndex(table.getPageCount() - 1)"
-                >
-                    <span class="sr-only">Go to last page</span>
-                    <ChevronsRightIcon class="h-4 w-4" />
-                </Button>
-            </div>
-        </div>
+        <CollectionFormSheet v-model:open="isNewRecordFormSheetOpen" />
+        <CollectionPreviewSheet v-model:open="isAPIPreviewSheetOpen" />
     </div>
 </template>

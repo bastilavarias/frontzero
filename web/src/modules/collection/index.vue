@@ -4,8 +4,8 @@ import {
     ResizablePanel,
     ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import CollectionList from "@/components/collection-list.vue"
-import CollectionTable from "@/components/collection-table.vue"
+import CollectionTable from "@/modules/collection/components/collection-table.vue"
+import CollectionList from "@/modules/collection/components/collection-list.vue"
 </script>
 
 <template>
