@@ -1,0 +1,7 @@
+entities:
+  - name: Todo
+    fields:
+      - name: id
+        type: int
+      - name: title
+        type: string
